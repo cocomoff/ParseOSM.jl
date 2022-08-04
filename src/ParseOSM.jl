@@ -7,6 +7,10 @@ using Graphs
 using SimpleWeightedGraphs
 using MetaGraphs
 using ProgressBars
+using GraphPlot
+using Colors
+using Compose
+using Cairo
 
 
 # constants, utilities
