@@ -1,5 +1,6 @@
 const TARGET_SET_FULL = Set{String}(["trunk", "primary", "secondary", "tertiary", "unclassified", "residential"])
 const TARGET_SET_LARGE = Set{String}(["trunk", "primary", "secondary"])
+const TARGET_SET_MEDIUM = Set{String}(["trunk", "primary", "secondary", "tertiary", "unclassified", "residential", "pedestrian"])
 const TARGET_SET_PS = Set{String}(["primary", "secondary"])
 const TARGET_SET_MORE = Set{String}(["trunk",
     "primary", "secondary", "tertiary", "unclassified", "residential",
@@ -11,17 +12,19 @@ function extract(; name = "shinjuku.osm",
     target_set = TARGET_SET_LARGE,
     DATA_URL = "./data",
     OUTPUT_URL = "./output",
+    cleanup = false,
     overwrite = false)
     
     basename = splitdir(splitext(name)[1])[2]
     filepath = joinpath(DATA_URL, name)
-    suffix = "_large" #get_suffix(target_set)
+    suffix = "" #get_suffix(target_set)
     nidname = joinpath(OUTPUT_URL, "$(basename)_nodeid$(suffix).csv")
     eidname = joinpath(OUTPUT_URL, "$(basename)_edgeid$(suffix).csv")
 
     @info "Input     : $(filepath)"
     @info "V-output  : $(nidname)"
     @info "E-output  : $(eidname)"
+    @info "Target    : $(target_set)"
 
     if overwrite || !isfile(nidname)
         counter = 0
@@ -60,15 +63,28 @@ function extract(; name = "shinjuku.osm",
 
                     highwayType = ""
                     refs = String[]
+                    data = Dict()
                     for c in eachelement(tree)
-                        if c.name == "tag" && c["k"] == "highway"
-                            highwayType = c["v"]
+                        if c.name == "tag"
+                            if c["k"] == "highway"
+                                highwayType = c["v"]
+                            else
+                                data[c["k"]] = c["v"]
+                            end
                         elseif c.name == "nd"
                             push!(refs, c["ref"])
                         end
                     end
 
                     if highwayType in target_set
+                        # new cleaning
+                        if haskey(data, "level") && parse(Int, data["level"]) < 0
+                            continue
+                        end
+                        if haskey(data, "layer") && parse(Int, data["layer"]) > 0
+                            continue
+                        end
+                        @info data
                         edgelist = join(refs, ",")
                         write(outfile, "$(way_id) $(edgelist)\n")
                         # println("$way_id $edgelist")

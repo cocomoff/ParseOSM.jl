@@ -3,6 +3,7 @@ function visualize_lightgraph(;
     data="./output/")
     basename = splitdir(splitext(name)[1])[2]
     outpath = joinpath(data, "gplot_$(basename).png")
+    outpath_svg = joinpath(data, "gplot_$(basename).svg")
     fnpath = joinpath(data, name)
     println(fnpath)
     jldopen(fnpath, "r") do dict
@@ -27,5 +28,6 @@ function visualize_lightgraph(;
             context(), 
             (context(mirror=Mirror(pi, 0.5, 0.5)), gp))
         draw(PNG(outpath, 12cm, 12cm), gpnew)
+        draw(SVG(outpath_svg, 12cm, 12cm), gpnew)
     end
 end
